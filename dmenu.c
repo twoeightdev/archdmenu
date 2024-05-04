@@ -15,6 +15,7 @@
 #include <X11/extensions/Xinerama.h>
 #endif
 #include <X11/Xft/Xft.h>
+#include <X11/Xresource.h>
 
 #include "drw.h"
 #include "util.h"
@@ -717,6 +718,36 @@ usage(void)
 {
 	die("usage: dmenu [-bfiv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
 	    "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]");
+}
+
+void
+read_Xresources(void) {
+    XrmInitialize();
+
+    char* xrm;
+    if ((xrm = XResourceManagerString(drw->dpy))) {
+        char *type;
+        XrmDatabase xdb = XrmGetStringDatabase(xrm);
+        XrmValue xval;
+
+        /* font or font set */
+        if (XrmGetResource(xdb, "dmenu.font", "*", &type, &xval) == True)
+            fonts[0] = strdup(xval.addr);
+        /* normal background color */
+        if (XrmGetResource(xdb, "dmenu.color0", "*", &type, &xval) == True)
+            colors[SchemeNorm][ColBg] = strdup(xval.addr);
+        /* normal foreground color */
+        if (XrmGetResource(xdb, "dmenu.color4", "*", &type, &xval) == True)
+            colors[SchemeNorm][ColFg] = strdup(xval.addr);
+        /* selected background color */
+        if (XrmGetResource(xdb, "dmenu.color4", "*", &type, &xval) == True)
+            colors[SchemeSel][ColBg] = strdup(xval.addr);
+        /* selected foreground color */
+        if (XrmGetResource(xdb, "dmenu.color0", "*", &type, &xval) == True)
+            colors[SchemeSel][ColFg] = strdup(xval.addr);
+
+        XrmDestroyDatabase(xdb);
+    }
 }
 
 int
